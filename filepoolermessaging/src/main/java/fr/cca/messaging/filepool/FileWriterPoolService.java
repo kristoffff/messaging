@@ -1,10 +1,11 @@
 package fr.cca.messaging.filepool;
 
+import fr.cca.messaging.filepool.burk.FileWriterPool;
+import fr.cca.messaging.filepool.ok.DataPooler;
 import fr.cca.messaging.model.Message;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,19 +24,19 @@ public class FileWriterPoolService {
 
 
     private Map<String, UUID> uuidMap = new ConcurrentHashMap<String, UUID>();
-    private Map<UUID, FileWriterPool> fileWriterPoolMap = new ConcurrentHashMap<UUID, FileWriterPool>();
+    private Map<UUID, IFileWriterPool> fileWriterPoolMap = new ConcurrentHashMap<>();
 
     public void treatMessage(Message m) throws Exception {
-        FileWriterPool fwp;
+        IFileWriterPool fwp;
         switch (m.getType()){
             case START:
                 checkUUIDisNew(m.getUuid());
                 UUID uuid = UUID.randomUUID();
                 uuidMap.put(m.getUuid(),uuid);
-                fwp = new FileWriterPool();
+                fwp = new DataPooler();
                 fileWriterPoolMap.put(uuid,fwp);
                 Path baseDirectory = Files.createDirectories(Paths.get(rootDir, uuid.toString()));
-                fwp.start(baseDirectory.toString() ,fileName, 10);
+                fwp.start(baseDirectory.toString() ,fileName);
                 break;
             case DATA:
                 checkUUIDExists(m.getUuid());

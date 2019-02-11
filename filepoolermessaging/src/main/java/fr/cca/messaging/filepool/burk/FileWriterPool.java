@@ -1,4 +1,6 @@
-package fr.cca.messaging.filepool;
+package fr.cca.messaging.filepool.burk;
+
+import fr.cca.messaging.filepool.IFileWriterPool;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -10,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class FileWriterPool {
+public class FileWriterPool implements IFileWriterPool{
 
     private ExecutorService executorService;
     private Set<FileWriterThread> threadSet = new HashSet<>();
@@ -20,7 +22,7 @@ public class FileWriterPool {
         this.threadCounter = new AtomicInteger(0);
     }
 
-
+    @Override
     public void start(final String basePath, final String fileName, final int nbThread) {
         executorService = Executors.newFixedThreadPool(nbThread, (Runnable r) -> {
             FileWriterThread thread = null;
@@ -33,6 +35,7 @@ public class FileWriterPool {
             return thread;
         });
     }
+
 
     public void writeRow(String row) {
         executorService.submit(new AcceleratorRowWriter(row));

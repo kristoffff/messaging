@@ -1,4 +1,4 @@
-package fr.cca.messaging.filepool;
+package fr.cca.messaging.filepool.burk;
 
 import java.io.FileWriter;
 import java.io.IOException;
