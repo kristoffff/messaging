@@ -1,11 +1,13 @@
 package fr.cca.messaging.filepool;
 
-import fr.cca.messaging.filepool.burk.FileWriterPool;
 import fr.cca.messaging.filepool.ok.DataPooler;
 import fr.cca.messaging.model.Message;
+import fr.cca.messaging.model.MessageData;
+import fr.cca.messaging.model.MessageType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,15 +30,15 @@ public class FileWriterPoolService {
 
     public void treatMessage(Message m) throws Exception {
         IFileWriterPool fwp;
-        switch (m.getType()){
+        switch (m.getType()) {
             case START:
                 checkUUIDisNew(m.getUuid());
                 UUID uuid = UUID.randomUUID();
-                uuidMap.put(m.getUuid(),uuid);
+                uuidMap.put(m.getUuid(), uuid);
                 fwp = new DataPooler();
-                fileWriterPoolMap.put(uuid,fwp);
+                fileWriterPoolMap.put(uuid, fwp);
                 Path baseDirectory = Files.createDirectories(Paths.get(rootDir, uuid.toString()));
-                fwp.start(baseDirectory.toString() ,fileName);
+                fwp.start(baseDirectory.toString(), fileName);
                 break;
             case DATA:
                 checkUUIDExists(m.getUuid());
@@ -56,14 +58,36 @@ public class FileWriterPoolService {
     }
 
     private void checkUUIDisNew(String uuid) {
-        if (uuidMap.containsKey(uuid)){
+        if (uuidMap.containsKey(uuid)) {
             throw new RuntimeException(String.format("This uuid was already used. You cannot start a new process with uuid : %s", uuid));
         }
     }
 
     private void checkUUIDExists(String uuid) {
-        if (!uuidMap.containsKey(uuid)){
+        if (!uuidMap.containsKey(uuid)) {
             throw new RuntimeException(String.format("Process with UUID %s does not exist. Start the process first", uuid));
         }
+    }
+
+    @PostConstruct
+    public void test() throws Exception {
+        Message mStart = new Message();
+        mStart.setUuid("toto");
+        mStart.setType(MessageType.START);
+        mStart.setData(new MessageData("TOTO"));
+        this.treatMessage(mStart);
+
+        for (int i = 0; i < 10_000_000; i++) {
+            Message mData = new Message();
+            mData.setUuid("toto");
+            mData.setType(MessageType.DATA);
+            mData.setData(new MessageData("TOTO:" + i));
+            this.treatMessage(mData);
+        }
+        Message mEnd = new Message();
+        mEnd.setUuid("toto");
+        mEnd.setType(MessageType.END);
+        mEnd.setData(new MessageData("END"));
+        this.treatMessage(mEnd);
     }
 }

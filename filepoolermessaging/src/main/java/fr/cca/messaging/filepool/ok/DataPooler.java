@@ -35,6 +35,7 @@ public class DataPooler implements IFileWriterPool {
                                 bw.newLine();
                             }
                         }
+                        bw.flush();
                         bw.close();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -54,6 +55,9 @@ public class DataPooler implements IFileWriterPool {
 
     @Override
     public void close() throws Exception {
+        while (!queue.isEmpty()){
+
+        }
         this.isActive = false;
         this.queue.add("");
     }
